@@ -1,3 +1,4 @@
+import { config } from '../../core/config.js';
 import { withTransaction } from '../../core/db.js';
 import { newId } from '../../core/ids.js';
 import { isValidCardNumber, simulateResponse, scaledDelay } from './simulator.js';
@@ -112,9 +113,48 @@ export async function processDueCharges({ limit = 100, log = console.error } = {
   return delivered;
 }
 
+// O MVP só tem o gateway simulado: qualquer outro GATEWAY_MODE impede a subida (nenhuma chave de pagamento existe).
+export function assertSimulatedMode(mode = config.gatewayMode) {
+  if (mode !== 'simulated') {
+    throw new Error(`GATEWAY_MODE="${mode}" não é suportado: o MVP só tem o gateway simulado (GATEWAY_MODE=simulated).`);
+  }
+}
+
+// Worker: varre as cobranças vencidas a cada pollMs (GATEWAY_POLL_MS, padrão 200), sem varreduras sobrepostas.
+// Retorna stop(), que para o timer e espera a varredura em andamento terminar.
+export function startWorker({ pollMs = config.gatewayPollMs, log = console.error } = {}) {
+  if (!Number.isFinite(pollMs) || pollMs <= 0) throw new Error(`GATEWAY_POLL_MS inválido: ${pollMs}`);
+  let running = null;
+  let stopped = false;
+  const sweep = () => {
+    if (stopped || running) return;
+    running = processDueCharges({ log })
+      .catch((err) => log(`[gateway] falha na varredura: ${errorMessage(err)}`))
+      .finally(() => {
+        running = null;
+      });
+  };
+  const timer = setInterval(sweep, pollMs);
+  sweep(); // entrega já na subida o que venceu enquanto o app estava fora do ar
+  return async function stopWorker() {
+    stopped = true;
+    clearInterval(timer);
+    const current = running;
+    if (current) await current;
+  };
+}
+
 export default {
   name: 'gateway',
   order: 30,
   // Gateway é interno: nenhuma rota.
   register() {},
+  // Chamado pelo carregador de módulos na subida (server.js e startTestServer({ workers: true })).
+  async start() {
+    assertSimulatedMode();
+    if (!Number.isFinite(config.gatewayTimeScale) || config.gatewayTimeScale <= 0) {
+      throw new Error(`GATEWAY_TIME_SCALE inválido: ${config.gatewayTimeScale} (use 1; os testes usam 0.02)`);
+    }
+    return startWorker();
+  },
 };
