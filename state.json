@@ -40,7 +40,7 @@
       "id": "F04",
       "name": "Vendas: compra, vagas e Meus ingressos",
       "wave": 3,
-      "status": "pending",
+      "status": "in_progress",
       "branch": "feature/F04-vendas",
       "pr": null,
       "latestReport": null
