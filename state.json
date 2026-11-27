@@ -31,10 +31,10 @@
       "id": "F03",
       "name": "Gateway de pagamento simulado",
       "wave": 2,
-      "status": "in_progress",
+      "status": "done",
       "branch": "feature/F03-gateway",
-      "pr": null,
-      "latestReport": null
+      "pr": "https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/2",
+      "latestReport": "docs/features/F03-gateway/reports/2026-11-27-avaliacao-1.md"
     },
     {
       "id": "F04",
