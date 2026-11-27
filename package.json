@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node src/server.js",
     "lint": "eslint .",
-    "test": "node --test --test-concurrency=1 --test-reporter=spec",
+    "test": "node --test --test-concurrency=1 --test-force-exit --test-reporter=spec \"test/**/*.test.js\"",
     "up": "./scripts/up.sh",
     "down": "./scripts/down.sh",
     "gates": "./scripts/gates.sh"
