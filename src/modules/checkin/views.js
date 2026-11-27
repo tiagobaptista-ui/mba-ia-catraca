@@ -18,10 +18,8 @@ function checkinForm(event, { focus }) {
 }
 
 // Seção "Check-in" da página de gestão (R04, R10). result = { key, message, code } do POST, ou undefined no GET.
-// Rascunho nunca teve venda (só evento publicado vende, R02): sem tentativa, a seção não aparece. Em evento
-// cancelado o campo continua disponível — vale a lista de R10 — com a nota "Evento cancelado".
+// Em evento cancelado o campo continua disponível — vale a lista de R10 — com a nota "Evento cancelado".
 export function checkinSection(event, result) {
-  if (event.status === 'draft' && !result) return null;
   return html`<h2>Check-in</h2>
     ${event.status === 'cancelled' ? html`<p class="checkin-note" data-event-status="cancelled">Evento cancelado</p>` : ''}
     ${checkinForm(event, { focus: Boolean(result) })}

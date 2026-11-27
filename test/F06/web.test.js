@@ -64,12 +64,12 @@ test('X12 (R04): a página de gestão de evento publicado tem a seção de check
   assert.doesNotMatch(section, /checkin-result|Evento cancelado/, 'sem tentativa, sem resultado');
 });
 
-test('rascunho (nunca vendeu) não mostra a seção; um POST nele responde inválido na própria seção', async () => {
+test('rascunho (nunca vendeu) também tem o campo; qualquer código responde inválido', async () => {
   const a = await loginAs(app.baseUrl, SEED.organizerA);
-  const draftId = await createEventVia(a, { name: 'Rascunho sem porta' }, { publish: false });
+  const draftId = await createEventVia(a, { name: 'Rascunho na porta' }, { publish: false });
   const page = await a.get(`/organizer/events/${draftId}`);
   assert.equal(page.status, 200);
-  assert.deepEqual(sectionKeys(page.text).filter((k) => k !== 'dashboard' && k !== 'cancel'), ['details', 'publish', 'edit']);
+  assert.match(sectionOf(page.text, 'checkin'), checkinForm(draftId));
 
   const posted = await checkinVia(a, draftId, 'ZZZZZZZZ');
   assert.equal(posted.status, 200);
