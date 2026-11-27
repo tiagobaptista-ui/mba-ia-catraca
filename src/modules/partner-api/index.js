@@ -1,8 +1,9 @@
 import express from 'express';
 import { toIsoOffset } from '../../core/time.js';
 import { listOnSaleEvents } from '../events/service.js';
-import { getAvailabilityMap } from '../sales/service.js';
+import { getAvailabilityMap, purchaseTicket } from '../sales/service.js';
 import { hasValidApiKey, requireApiKey, sendUnauthorized } from './auth.js';
+import { parsePurchaseBody } from './validation.js';
 
 // API de parceiros (F05), contrato fixo do brief. Toda rota sob /api/partner exige X-Api-Key; as respostas são
 // sempre JSON. Caminho desconhecido com chave válida cai no 404 JSON do app ({"error":"not_found"}).
@@ -11,6 +12,14 @@ export const BASE_PATH = '/api/partner';
 export function sendError(res, status, error) {
   return res.status(status).json({ error });
 }
+
+// Falhas de purchaseTicket → resposta da API. invalid_card não deveria chegar aqui (o corpo já foi validado com a
+// mesma regra), mas, se chegar, é corpo inválido.
+const PURCHASE_ERRORS = Object.freeze({
+  invalid_card: { status: 422, error: 'invalid_request' },
+  event_not_available: { status: 404, error: 'event_not_available' }, // inexistente, rascunho ou cancelado (R02)
+  sold_out: { status: 409, error: 'sold_out' }, // R07
+});
 
 // Evento no formato do contrato: startsAt em ISO 8601 com offset −03:00, preço atual em centavos (X09).
 export function partnerEvent(event, availableSeats) {
@@ -33,6 +42,23 @@ function partnerRoutes() {
     const events = await listOnSaleEvents();
     const available = await getAvailabilityMap(events.map((event) => event.id));
     res.json(events.map((event) => partnerEvent(event, available.get(event.id) ?? 0)));
+  });
+
+  // Compra de um ingresso (R06) pelo mesmo serviço da vitrine: mesma lotação e mesmo lock do evento (R07).
+  // Ordem dos erros: 422 corpo inválido → 404 evento fora de venda → 409 sem vaga. O corpo precisa ser JSON
+  // (application/json); JSON malformado vira 422 em partnerErrors.
+  router.post('/events/:eventId/purchases', express.json(), async (req, res) => {
+    const input = req.is('application/json') ? parsePurchaseBody(req.body) : null;
+    if (!input) return sendError(res, 422, 'invalid_request');
+
+    const result = await purchaseTicket({ eventId: req.params.eventId, ...input, channel: 'partner' });
+    if (result.ok) {
+      const { id, code, status } = result.ticket;
+      return res.status(202).json({ ticketId: id, code, status }); // pendente, sem esperar o gateway (R06)
+    }
+    const failure = PURCHASE_ERRORS[result.error];
+    if (!failure) throw new Error(`purchaseTicket: erro inesperado ${result.error}`);
+    return sendError(res, failure.status, failure.error);
   });
 
   return router;
