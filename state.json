@@ -94,10 +94,10 @@
       "id": "F10",
       "name": "Layout fluido em azul e roxo",
       "wave": 6,
-      "status": "in_review",
+      "status": "done",
       "branch": "feature/F10-layout-fluido",
       "pr": "https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/10",
-      "latestReport": null
+      "latestReport": "docs/features/F10-layout-fluido/reports/2026-11-27-avaliacao-1.md"
     }
   ]
 }

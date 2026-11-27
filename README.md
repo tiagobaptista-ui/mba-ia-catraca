@@ -68,6 +68,7 @@ Uma pasta por feature, com `spec.md`, `plan.md`, `contract.md` e `reports/` (rel
 | F07 | Cancelamento de evento | 4 ∥ | [docs/features/F07-cancelamento](docs/features/F07-cancelamento) | [#7](https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/7) |
 | F08 | Painel do evento | 4 ∥ | [docs/features/F08-painel](docs/features/F08-painel) | [#5](https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/5) |
 | F09 | Verificação integrada (Fluxo do avaliador) | 5 | [docs/features/F09-verificacao-integrada](docs/features/F09-verificacao-integrada) | [#9](https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/9) |
+| F10 | Layout fluido em azul e roxo | 6 | [docs/features/F10-layout-fluido](docs/features/F10-layout-fluido) | [#10](https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/10) (registro: [#11](https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/11)) |
 
 ### PRs das waves paralelas
 
@@ -139,7 +140,8 @@ no produto; `GATEWAY_MODE` diferente de `simulated` falha na subida.
 
 - Papéis separados: o orquestrador (sessão principal do Claude Code, Claude Opus 5.5) escreveu PRD, specs, planos e
   contratos, implementou a fundação (F01) e integrou os PRs; F02–F09 foram implementadas cada uma por um subagente
-  próprio (Claude Opus 5.5) numa worktree; **toda** avaliação, inclusive a de F01, foi feita por outro subagente,
+  próprio (Claude Opus 5.5) numa worktree, e F10 por uma sessão própria do Claude Code; **toda** avaliação,
+  inclusive a de F01, foi feita por outro subagente,
   novo e de contexto vazio, **com outro modelo** (Claude Sonnet 5.5), que só recebeu o repositório público, o commit
   e o caminho do contrato — nunca o relato do implementador.
 - O avaliador clona o commit numa pasta vazia, sobe o ambiente com os tempos reais do gateway, executa cada item do
@@ -150,6 +152,15 @@ no produto; `GATEWAY_MODE` diferente de `simulated` falha na subida.
   relatório, nunca a edição do antigo.
 - Depois do último merge, o Fluxo do avaliador roda inteiro contra a `main` a partir de um clone limpo (F09), porque
   é quando as features se encontram que as falhas aparecem.
+
+### Layout (F10)
+
+Depois da entrega do MVP veio o pedido de um layout fluido com azul e roxo como base. Ele foi implementado por uma
+sessão de agente própria (PR #10), sem mudar comportamento: rotas, textos visíveis e marcadores `data-*` são os
+mesmos. Tokens de cor em `:root`, tipografia e espaçamentos com `clamp()`, grades `auto-fit` (vitrine, página de
+gestão, painel), tabelas que rolam por dentro em telas estreitas e modo escuro por `prefers-color-scheme`; a folha
+fica em `src/core/style.js`. O registro no processo (PRD, spec, plano, contrato) veio depois do merge, no PR #11,
+e a avaliação independente atestou o commit com o layout: 11/11, com o Fluxo do avaliador ainda 94/94.
 
 ### O que apareceu quando as features se encontraram
 
@@ -162,3 +173,6 @@ no produto; `GATEWAY_MODE` diferente de `simulated` falha na subida.
   (PR #7).
 - O helper de testes que entrega respostas do gateway entregava todas as vencidas, o que deixava um teste de F04
   intermitente sob carga; e dois clones com o mesmo nome de pasta colidiam nos gates. Ambos corrigidos em F09.
+- No layout (F10), o CSS embutido no `<head>` levava seletores como `[data-metric]` para páginas negadas, e os
+  testes de isolamento de R13 (que procuram marcadores de dados numa página 404) quebraram. A folha passou a ser
+  servida à parte (`/assets/catraca.css`) e os testes ficaram como estavam.
