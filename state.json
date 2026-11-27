@@ -58,28 +58,28 @@
       "id": "F06",
       "name": "Check-in",
       "wave": 4,
-      "status": "in_progress",
+      "status": "done",
       "branch": "feature/F06-checkin",
-      "pr": null,
-      "latestReport": null
+      "pr": "https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/6",
+      "latestReport": "docs/features/F06-checkin/reports/2026-11-27-avaliacao-1.md"
     },
     {
       "id": "F07",
       "name": "Cancelamento de evento",
       "wave": 4,
-      "status": "in_progress",
+      "status": "done",
       "branch": "feature/F07-cancelamento",
-      "pr": null,
-      "latestReport": null
+      "pr": "https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/7",
+      "latestReport": "docs/features/F07-cancelamento/reports/2026-11-27-avaliacao-1.md"
     },
     {
       "id": "F08",
       "name": "Painel do evento",
       "wave": 4,
-      "status": "in_progress",
+      "status": "done",
       "branch": "feature/F08-painel",
-      "pr": null,
-      "latestReport": null
+      "pr": "https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/5",
+      "latestReport": "docs/features/F08-painel/reports/2026-11-27-avaliacao-1.md"
     },
     {
       "id": "F09",
