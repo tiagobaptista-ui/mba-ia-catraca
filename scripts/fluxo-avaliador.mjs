@@ -784,9 +784,254 @@ async function passo11() {
   expectCheckin(await checkin(A, ctx.E1, ctx.C3), ctx.C3, 'de volta como A, C3 (de E2, do organizador B) no check-in de E1', 'Ingresso inválido para este evento');
 }
 
+// ---- Passos 12–16 -----------------------------------------------------------------------------------------
+
+// Resposta de erro JSON exata do contrato: { "error": "<erro>" }.
+const isApiError = (res, status, error) => res.status === status && JSON.stringify(res.json) === JSON.stringify({ error });
+
+async function passo12() {
+  step(12, 'E3: T5 (lento) e T6 confirmado; cancelamento antes de 30 s da compra de T5');
+  const { A } = actors;
+  ctx.e3 = {
+    name: `E3 Workshop ${RUN}`,
+    startsAt: nextMonthInput(22, '19:00'),
+    venue: `Auditório do Fluxo ${RUN}`,
+    capacity: '5',
+    price: '50,00',
+  };
+  ctx.E3 = await createEvent(A, ctx.e3, 'E3 (lotação 5, R$ 50,00)');
+  await publishEvent(A, ctx.E3, 'E3');
+  const listed = await api.listEvents();
+  const item = Array.isArray(listed.json) ? listed.json.find((e) => e.id === ctx.E3) : undefined;
+  must(item, 'E3 na listagem da API ($E3 guardado)', `GET /api/partner/events → ${listed.status}, ${JSON.stringify(item)}`);
+
+  // A página de gestão de E3 fica "aberta": o cancelamento usa o botão desta mesma página, carregada antes das compras.
+  const opened = await managementPage(A, ctx.E3);
+  const cancelForm = findForm(opened.text, (f) => f.action === `${managementPath(ctx.E3)}/cancel`);
+  must(cancelForm, 'página de gestão de E3 aberta, com "Cancelar evento"', `GET ${managementPath(ctx.E3)} → ${opened.status}`);
+
+  const t5 = await partnerBuy(ctx.E3, 'de E3 (T5)', 't5@example.com', CARD.approveSlow);
+  const t6 = await partnerBuy(ctx.E3, 'de E3 (T6), logo depois,', 't6@example.com', CARD.approve);
+  Object.assign(ctx, { t5, T5: t5.id, T6: t6.id, C6: t6.code });
+  info(`$T5 = ${ctx.T5}, $T6 = ${ctx.T6}, C6 = ${ctx.C6}`);
+  await expectTicketStatus(t6, 'confirmed', 10_000, 'T6 fica confirmed');
+  const t5now = await api.ticket(ctx.T5);
+  check(t5now.json?.status === 'pending', 'T5 continua pending antes do cancelamento', `GET /api/partner/tickets/${ctx.T5} → ${t5now.status} ${t5now.text}`);
+
+  const res = await A.submit(cancelForm);
+  ctx.cancelledAt = Date.now();
+  const afterT5 = ctx.cancelledAt - t5.sentAt;
+  check(
+    res.status === 200 && eventStatusOf(res.text) === 'cancelled' && afterT5 < 30_000,
+    'E3 cancelado pela página de gestão antes de 30 s da compra de T5',
+    `POST ${cancelForm.action} → ${res.status}, data-status="${eventStatusOf(res.text)}", ` +
+      `"${snippet(textOf(sectionOf(res.text, 'cancel')), 90)}", ${secs(afterT5)} depois da compra de T5`,
+  );
+}
+
+async function passo13() {
+  step(13, 'E3 cancelado: fora da vitrine e da API; T6 refunded e T5 cancelled em até 10 s; edição bloqueada');
+  const { A, visitor } = actors;
+  const home = await visitor.get('/');
+  check(
+    home.status === 200 && !home.text.includes(ctx.E3) && !home.text.includes(ctx.e3.name),
+    'E3 sai da vitrine',
+    `GET / → ${home.status}, nenhum card ${ctx.E3}`,
+  );
+  const list = await api.listEvents();
+  check(
+    list.status === 200 && Array.isArray(list.json) && !list.json.some((e) => e.id === ctx.E3),
+    'E3 sai da listagem da API',
+    `GET /api/partner/events → ${list.status}, ${list.json?.length} eventos, nenhum com id ${ctx.E3}`,
+  );
+  const buy = await api.purchase(ctx.E3, { buyerEmail: 't7@example.com', cardNumber: CARD.approve });
+  check(
+    isApiError(buy, 404, 'event_not_available'),
+    'compra de E3 pela API responde 404 event_not_available',
+    `POST /api/partner/events/${ctx.E3}/purchases → ${buy.status} ${buy.text}`,
+  );
+
+  const polled = await pollUntil(
+    async () => {
+      const [t6, t5] = await Promise.all([api.ticket(ctx.T6), api.ticket(ctx.T5)]);
+      const value = { T6: t6.json?.status, T5: t5.json?.status };
+      return { ok: value.T6 === 'refunded' && value.T5 === 'cancelled', value };
+    },
+    { deadline: ctx.cancelledAt + 15_000 },
+  );
+  const elapsed = polled.value ? polled.at - ctx.cancelledAt : null;
+  check(
+    polled.value && elapsed <= 10_000,
+    'em até 10 s, T6 está refunded e T5 está cancelled',
+    polled.value
+      ? `${JSON.stringify(polled.value)} ${secs(elapsed)} depois do cancelamento`
+      : `ainda ${JSON.stringify(polled.last)} 15 s depois do cancelamento`,
+  );
+
+  const page = await managementPage(A, ctx.E3);
+  const editForm = findForm(page.text, (f) => f.action === managementPath(ctx.E3));
+  const publishForm = findForm(page.text, (f) => f.action === `${managementPath(ctx.E3)}/publish`);
+  check(
+    page.status === 200 && eventStatusOf(page.text) === 'cancelled' && !editForm && !publishForm,
+    'a página de gestão de E3 não permite editar o evento',
+    `GET ${managementPath(ctx.E3)} → ${page.status}, data-status="${eventStatusOf(page.text)}", sem formulário de edição: ` +
+      `"${snippet(textOf(sectionOf(page.text, 'edit')), 90)}"`,
+  );
+  const attempt = await A.post(managementPath(ctx.E3), { ...ctx.e3, name: `${ctx.e3.name} (editado)` });
+  check(
+    attempt.status >= 400 && attempt.status < 500 && !attempt.location,
+    'e o envio direto da edição também é recusado',
+    `POST ${managementPath(ctx.E3)} → ${attempt.status}: ${errorsOf(attempt.text)}`,
+  );
+}
+
+async function passo14() {
+  step(14, 'passados 45 s da compra de T5: T5 continua cancelled; C6 → "Evento cancelado"; painel de E3');
+  const { A } = actors;
+  await sleepUntil(ctx.t5.doneAt + 45_000, `45 s da compra de T5; o cartão ${CARD.approveSlow} aprovaria em 30–40 s`);
+  const t5 = await api.ticket(ctx.T5);
+  check(
+    t5.status === 200 && t5.json?.status === 'cancelled',
+    'T5 continua cancelled (a aprovação tardia do gateway não muda o ingresso)',
+    `GET /api/partner/tickets/${ctx.T5} → ${t5.status} ${t5.text} (${secs(Date.now() - ctx.t5.doneAt)} depois da compra)`,
+  );
+  const attempt = await checkin(A, ctx.E3, ctx.C6);
+  if (attempt.form) {
+    expectCheckin(attempt, ctx.C6, 'no check-in de E3, C6', 'Evento cancelado');
+  } else {
+    const section = textOf(sectionOf(attempt.res.text, 'checkin'));
+    check(
+      section.includes('Evento cancelado'),
+      'no check-in de E3, "Evento cancelado" aparece no lugar do campo',
+      `GET ${managementPath(ctx.E3)} → ${attempt.res.status}, seção de check-in: "${snippet(section, 90)}"`,
+    );
+  }
+  await expectPanel(A, ctx.E3, 'E3', {
+    confirmed: 0,
+    pending: 0,
+    checkins: 0,
+    available: 0,
+    revenue: 'R$ 0,00',
+    refunded: 1,
+  });
+}
+
+// 30 compras simultâneas: as 30 requisições são disparadas juntas (Promise.all), cada uma na sua conexão.
+async function burst(label, day) {
+  const { A } = actors;
+  const fields = {
+    name: `${label} Rajada ${RUN}`,
+    startsAt: nextMonthInput(day, '18:00'),
+    venue: `Bar da Rajada ${RUN}`,
+    capacity: '5',
+    price: '10,00',
+  };
+  const eventId = await createEvent(A, fields, `${label} (lotação 5, R$ 10,00)`);
+  await publishEvent(A, eventId, label);
+  const listed = await api.listEvents();
+  const item = Array.isArray(listed.json) ? listed.json.find((e) => e.id === eventId) : undefined;
+  must(item?.availableSeats === 5, `${label} na listagem da API com availableSeats 5 ($${label} guardado)`, JSON.stringify(item));
+
+  const sentAt = Date.now();
+  const responses = await Promise.all(
+    Array.from({ length: 30 }, (_, i) =>
+      api.purchase(eventId, { buyerEmail: `carga${i + 1}@example.com`, cardNumber: CARD.approve }),
+    ),
+  );
+  const doneAt = Date.now();
+  const counts = new Map();
+  for (const res of responses) counts.set(res.status, (counts.get(res.status) || 0) + 1);
+  const uniq = [...counts].sort(([a], [b]) => a - b).map(([status, n]) => `${n} ${status}`).join(', ');
+  check(
+    counts.size === 2 && counts.get(202) === 5 && counts.get(409) === 25,
+    `30 compras simultâneas de ${label}: exatamente 5 × 202 e 25 × 409`,
+    `sort | uniq -c → ${uniq} (30 requisições disparadas juntas, todas respondidas em ${secs(doneAt - sentAt)})`,
+  );
+  const accepted = responses.filter((r) => r.status === 202);
+  const refused = responses.filter((r) => r.status === 409);
+  check(
+    accepted.every((r) => r.json?.status === 'pending') && refused.every((r) => isApiError(r, 409, 'sold_out')),
+    `as aceitas de ${label} vêm pending e as recusadas, sold_out`,
+    `${accepted.length} × ${accepted[0]?.text ?? '—'}; ${refused.length} × ${refused[0]?.text ?? '—'}`,
+  );
+
+  const polled = await pollUntil(
+    async () => {
+      const page = await managementPage(A, eventId);
+      const metrics = metricsOf(sectionOf(page.text, 'dashboard'));
+      return { ok: metrics.confirmed === '5' && metrics.available === '0', value: metrics };
+    },
+    { deadline: doneAt + 15_000, intervalMs: 250 },
+  );
+  const elapsed = polled.value ? polled.at - doneAt : null;
+  check(
+    polled.value && elapsed <= 10_000,
+    `em até 10 s, o painel de ${label} mostra Confirmados 5 e Vagas disponíveis 0`,
+    polled.value
+      ? `${secs(elapsed)} depois da rajada: ${describePanel(polled.value)}`
+      : `15 s depois da rajada: ${describePanel(polled.last ?? {})}`,
+  );
+}
+
+async function passo15() {
+  step(15, 'rajadas: 30 compras simultâneas em E4 e depois em E5 (lotação 5)');
+  await burst('E4', 25);
+  await burst('E5', 26);
+}
+
+async function passo16() {
+  step(16, 'API: 401 sem chave e com chave errada nas três rotas; 422 com cartão "123"; 404 ticket_not_found');
+  const routes = [
+    ['GET /api/partner/events', (opts) => api.listEvents(opts)],
+    [
+      `POST /api/partner/events/${ctx.E1}/purchases`,
+      (opts) => api.purchase(ctx.E1, { buyerEmail: 't401@example.com', cardNumber: CARD.approve }, opts),
+    ],
+    [`GET /api/partner/tickets/${ctx.T2}`, (opts) => api.ticket(ctx.T2, opts)],
+  ];
+  for (const [route, call] of routes) {
+    for (const [key, how] of [
+      [null, 'sem o cabeçalho X-Api-Key'],
+      ['chave-errada', 'com uma chave errada'],
+    ]) {
+      const res = await call({ key });
+      check(isApiError(res, 401, 'unauthorized'), `${route} ${how}: 401 unauthorized`, `${res.status} ${res.text}`);
+    }
+  }
+  const invalid = await api.purchase(ctx.E1, { buyerEmail: 't422@example.com', cardNumber: '123' });
+  check(
+    isApiError(invalid, 422, 'invalid_request'),
+    'compra com "cardNumber":"123" responde 422 invalid_request',
+    `POST /api/partner/events/${ctx.E1}/purchases → ${invalid.status} ${invalid.text}`,
+  );
+  const missingId = `tkt_inexistente_${RUN}`;
+  const missing = await api.ticket(missingId);
+  check(
+    isApiError(missing, 404, 'ticket_not_found'),
+    'consulta de um ticketId inexistente responde 404 ticket_not_found',
+    `GET /api/partner/tickets/${missingId} → ${missing.status} ${missing.text}`,
+  );
+}
+
 // ---- Passos -----------------------------------------------------------------------------------------------
 
-const STEPS = [passo2, passo3, passo4, passo5, passo6, passo7, passo8, passo9, passo10, passo11];
+const STEPS = [
+  passo2,
+  passo3,
+  passo4,
+  passo5,
+  passo6,
+  passo7,
+  passo8,
+  passo9,
+  passo10,
+  passo11,
+  passo12,
+  passo13,
+  passo14,
+  passo15,
+  passo16,
+];
 
 // ---- Execução ---------------------------------------------------------------------------------------------
 
