@@ -58,10 +58,10 @@
       "id": "F06",
       "name": "Check-in",
       "wave": 4,
-      "status": "in_progress",
+      "status": "done",
       "branch": "feature/F06-checkin",
-      "pr": null,
-      "latestReport": null
+      "pr": "https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/6",
+      "latestReport": "docs/features/F06-checkin/reports/2026-11-27-avaliacao-1.md"
     },
     {
       "id": "F07",

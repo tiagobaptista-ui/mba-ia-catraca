@@ -208,7 +208,8 @@ test('F02-CA07 (R11): evento cancelado não pode ser editado nem publicado e a g
   assert.equal(page.status, 200);
   assert.match(sectionOf(page.text, 'details'), /Cancelado/);
   assert.ok(page.text.includes('Evento cancelado: edição e publicação bloqueadas.'));
-  assert.doesNotMatch(mainOf(page.text), /<form/);
+  // nenhum formulário de edição ou publicação (o check-in de F06 continua disponível em evento cancelado, R10)
+  assert.doesNotMatch(mainOf(page.text), new RegExp(`<form[^>]*action="/organizer/events/${id}(/publish)?"`));
   assert.doesNotMatch(page.text, /name="capacity"/);
 
   // fora da vitrine, da página pública e de listOnSaleEvents
