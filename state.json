@@ -40,16 +40,16 @@
       "id": "F04",
       "name": "Vendas: compra, vagas e Meus ingressos",
       "wave": 3,
-      "status": "in_progress",
+      "status": "done",
       "branch": "feature/F04-vendas",
-      "pr": null,
-      "latestReport": null
+      "pr": "https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/4",
+      "latestReport": "docs/features/F04-vendas/reports/2026-11-27-avaliacao-1.md"
     },
     {
       "id": "F05",
       "name": "API de parceiros",
       "wave": 4,
-      "status": "pending",
+      "status": "in_progress",
       "branch": "feature/F05-api-parceiros",
       "pr": null,
       "latestReport": null
@@ -58,7 +58,7 @@
       "id": "F06",
       "name": "Check-in",
       "wave": 4,
-      "status": "pending",
+      "status": "in_progress",
       "branch": "feature/F06-checkin",
       "pr": null,
       "latestReport": null
@@ -67,7 +67,7 @@
       "id": "F07",
       "name": "Cancelamento de evento",
       "wave": 4,
-      "status": "pending",
+      "status": "in_progress",
       "branch": "feature/F07-cancelamento",
       "pr": null,
       "latestReport": null
@@ -76,7 +76,7 @@
       "id": "F08",
       "name": "Painel do evento",
       "wave": 4,
-      "status": "pending",
+      "status": "in_progress",
       "branch": "feature/F08-painel",
       "pr": null,
       "latestReport": null
