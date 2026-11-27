@@ -1,0 +1,27 @@
+{
+  "name": "catraca",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Venda de ingressos para eventos pequenos: vitrine, API de parceiros, check-in, cancelamento e painel.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "lint": "eslint .",
+    "test": "node --test --test-concurrency=1 --test-reporter=spec",
+    "up": "./scripts/up.sh",
+    "down": "./scripts/down.sh",
+    "gates": "./scripts/gates.sh"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.15.0",
+    "globals": "^17.14.0"
+  }
+}
