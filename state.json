@@ -22,7 +22,7 @@
       "id": "F02",
       "name": "Eventos do organizador e vitrine",
       "wave": 2,
-      "status": "pending",
+      "status": "in_progress",
       "branch": "feature/F02-eventos",
       "pr": null,
       "latestReport": null
@@ -31,7 +31,7 @@
       "id": "F03",
       "name": "Gateway de pagamento simulado",
       "wave": 2,
-      "status": "pending",
+      "status": "in_progress",
       "branch": "feature/F03-gateway",
       "pr": null,
       "latestReport": null

@@ -9,7 +9,7 @@ Leia este arquivo inteiro antes de agir. O PRD manda no escopo; o contrato da fe
 |---|---|---|
 | Subir tudo (build + migrações + seed) | `./scripts/up.sh` | produto em `http://localhost:3000` (`CATRACA_PORT` muda a porta) |
 | Derrubar tudo que a subida iniciou | `./scripts/down.sh` | mantém o volume do banco; `--purge` apaga os dados |
-| Gates (lint + testes automatizados) | `./scripts/gates.sh` | roda em containers isolados; `./scripts/gates.sh test/F04` filtra testes |
+| Gates (lint + testes automatizados) | `./scripts/gates.sh` | roda em containers isolados; `./scripts/gates.sh 'test/F04/*.test.js'` filtra testes |
 | Logs do app | `docker compose -p catraca logs -f app` | |
 | SQL no banco do app | `docker compose -p catraca exec db psql -U catraca catraca` | |
 | Rajada do passo 15 | `./scripts/rajada.sh <eventId>` | (F09) |
