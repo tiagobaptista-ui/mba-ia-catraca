@@ -116,7 +116,9 @@ test('F02-CA04 (R04): página de gestão com endereço próprio mostra dados, pu
   const res = await a.get(`/organizer/events/${id}`);
   assert.equal(res.status, 200);
   assert.match(res.text, /<h1>Gestão CA04<\/h1>/);
-  assert.deepEqual(sectionKeys(res.text), ['details', 'publish', 'edit']);
+  // seções nativas de F02, na ordem; as de outras features (painel, check-in, cancelamento) ficam de fora
+  const native = ['details', 'publish', 'edit'];
+  assert.deepEqual(sectionKeys(res.text).filter((k) => native.includes(k)), native);
 
   const details = sectionOf(res.text, 'details');
   assert.match(details, /Rascunho/);
