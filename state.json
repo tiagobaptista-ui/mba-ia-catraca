@@ -1,0 +1,17 @@
+{
+  "project": "catraca",
+  "description": "Estado do projeto: status de cada feature e caminho do relatório de avaliação mais recente.",
+  "updatedAt": "2026-11-27",
+  "statusValues": ["pending", "in_progress", "in_review", "done"],
+  "features": [
+    { "id": "F01", "name": "Fundação, contas e harness", "wave": 1, "status": "in_progress", "branch": "feature/F01-fundacao", "pr": null, "latestReport": null },
+    { "id": "F02", "name": "Eventos do organizador e vitrine", "wave": 2, "status": "pending", "branch": "feature/F02-eventos", "pr": null, "latestReport": null },
+    { "id": "F03", "name": "Gateway de pagamento simulado", "wave": 2, "status": "pending", "branch": "feature/F03-gateway", "pr": null, "latestReport": null },
+    { "id": "F04", "name": "Vendas: compra, vagas e Meus ingressos", "wave": 3, "status": "pending", "branch": "feature/F04-vendas", "pr": null, "latestReport": null },
+    { "id": "F05", "name": "API de parceiros", "wave": 4, "status": "pending", "branch": "feature/F05-api-parceiros", "pr": null, "latestReport": null },
+    { "id": "F06", "name": "Check-in", "wave": 4, "status": "pending", "branch": "feature/F06-checkin", "pr": null, "latestReport": null },
+    { "id": "F07", "name": "Cancelamento de evento", "wave": 4, "status": "pending", "branch": "feature/F07-cancelamento", "pr": null, "latestReport": null },
+    { "id": "F08", "name": "Painel do evento", "wave": 4, "status": "pending", "branch": "feature/F08-painel", "pr": null, "latestReport": null },
+    { "id": "F09", "name": "Verificação integrada (Fluxo do avaliador automatizado)", "wave": 5, "status": "pending", "branch": "feature/F09-verificacao-integrada", "pr": null, "latestReport": null }
+  ]
+}
