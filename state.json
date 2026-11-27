@@ -85,7 +85,7 @@
       "id": "F09",
       "name": "Verificação integrada (Fluxo do avaliador automatizado)",
       "wave": 5,
-      "status": "pending",
+      "status": "in_progress",
       "branch": "feature/F09-verificacao-integrada",
       "pr": null,
       "latestReport": null
