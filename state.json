@@ -22,10 +22,10 @@
       "id": "F02",
       "name": "Eventos do organizador e vitrine",
       "wave": 2,
-      "status": "in_progress",
+      "status": "done",
       "branch": "feature/F02-eventos",
-      "pr": null,
-      "latestReport": null
+      "pr": "https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/3",
+      "latestReport": "docs/features/F02-eventos/reports/2026-11-27-avaliacao-1.md"
     },
     {
       "id": "F03",
