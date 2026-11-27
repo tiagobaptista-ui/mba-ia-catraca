@@ -85,10 +85,10 @@
       "id": "F09",
       "name": "Verificação integrada (Fluxo do avaliador automatizado)",
       "wave": 5,
-      "status": "in_progress",
+      "status": "done",
       "branch": "feature/F09-verificacao-integrada",
-      "pr": null,
-      "latestReport": null
+      "pr": "https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/9",
+      "latestReport": "docs/features/F09-verificacao-integrada/reports/2026-11-27-avaliacao-1.md"
     }
   ]
 }
