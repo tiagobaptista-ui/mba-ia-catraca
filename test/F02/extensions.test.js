@@ -88,7 +88,10 @@ test('F02-CA04 (R04): seções registradas por outras features aparecem na pági
     const page = await a.get(`/organizer/events/${id}`);
     assert.equal(page.status, 200);
     // nativas de F02 (0, 40, 50) intercaladas com as das outras features pela ordem
-    assert.deepEqual(sectionKeys(page.text), ['details', 'fake-panel', 'fake-checkin', 'publish', 'edit', 'fake-cancel']);
+    // (as seções reais de outras features, como o painel de F08, ficam de fora da comparação)
+    const ownKeys = (text) =>
+      sectionKeys(text).filter((k) => k.startsWith('fake-') || ['details', 'publish', 'edit'].includes(k));
+    assert.deepEqual(ownKeys(page.text), ['details', 'fake-panel', 'fake-checkin', 'publish', 'edit', 'fake-cancel']);
     assert.match(sectionOf(page.text, 'fake-panel'), /Lotação 4 de Seções/);
     assert.doesNotMatch(sectionOf(page.text, 'fake-checkin'), /class="result"/);
     assert.deepEqual(renders, [{ event: id, user: SEED.organizerA }]);
