@@ -154,12 +154,12 @@ export function storefrontBody(cards) {
   const list =
     cards.length === 0
       ? html`<p class="muted">Nenhum evento à venda no momento.</p>`
-      : cards.map(
+      : html`<div class="cards">${cards.map(
           ({ event, extras }) => html`<article class="card" data-event-id="${event.id}">
             <h2><a href="/events/${event.id}">${event.name}</a></h2>
             ${eventFacts(event)}
             ${extras}
           </article>`,
-        );
+        )}</div>`;
   return html`<h1>Eventos à venda</h1>${list}`;
 }

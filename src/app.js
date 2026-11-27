@@ -4,6 +4,7 @@ import { sendPage } from './core/layout.js';
 import { loadUser } from './core/auth.js';
 import { query } from './core/db.js';
 import { config } from './core/config.js';
+import { STYLE, STYLE_PATH } from './core/style.js';
 
 // Monta o app HTTP com os módulos já carregados (ver core/modules.js).
 export function createApp(modules) {
@@ -21,6 +22,11 @@ export function createApp(modules) {
   app.get('/healthz', async (_req, res) => {
     await query('SELECT 1');
     res.type('text').send('ok');
+  });
+
+  // Folha de estilo do layout (src/core/style.js). Pública; o ?v=<hash> do link invalida o cache.
+  app.get(STYLE_PATH, (_req, res) => {
+    res.type('css').set('Cache-Control', 'public, max-age=86400').send(STYLE);
   });
 
   // Formulários HTML. JSON fica a cargo de cada módulo (a API de parceiros valida a chave antes do corpo).
