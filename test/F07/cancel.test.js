@@ -195,7 +195,9 @@ test('X14 (R11): a gestão do evento cancelado não oferece edição nem cancela
   const page = await a.get(`/organizer/events/${eventId}`);
   assert.equal(page.status, 200);
   const main = mainOf(page.text);
-  assert.doesNotMatch(main, /<form/, 'sem formulário de edição, publicação ou cancelamento');
+  // sem formulário de edição, publicação ou cancelamento (o check-in de F06 continua disponível em evento
+  // cancelado, como R10 permite)
+  assert.doesNotMatch(main, new RegExp(`<form[^>]*action="/organizer/events/${eventId}(/publish|/cancel)?"`));
   assert.doesNotMatch(main, /name="capacity"/);
   assert.doesNotMatch(main, /Cancelar evento/);
   assert.match(sectionOf(page.text, 'cancel'), /Evento cancelado em \d{2}\/\d{2}\/\d{4} \d{2}:\d{2}\./);
@@ -248,7 +250,8 @@ test('F07-CA01, F07-CA02: cancelar pela gestão responde 200 com "Evento cancela
   const res = await a.post(`/organizer/events/${eventId}/cancel`, {});
   assert.equal(res.status, 200);
   assert.ok(res.text.includes('Evento cancelado. 1 ingresso estornado e 1 cancelado.'));
-  assert.doesNotMatch(mainOf(res.text), /<form/, 'a resposta já vem sem edição nem botão de cancelar');
+  // a resposta já vem sem edição nem botão de cancelar (o check-in de F06 pode continuar, R10)
+  assert.doesNotMatch(mainOf(res.text), new RegExp(`<form[^>]*action="/organizer/events/${eventId}(/publish|/cancel)?"`));
   assert.equal((await eventRow(eventId)).status, 'cancelled');
   assert.equal((await ticketRow(fast.id)).status, 'refunded');
   assert.equal((await ticketRow(slow.id)).status, 'cancelled');
