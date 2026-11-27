@@ -1,0 +1,30 @@
+# Ambiente efêmero dos gates (lint + testes). Banco em memória (tmpfs), sem portas publicadas.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: catraca
+      POSTGRES_PASSWORD: catraca
+      POSTGRES_DB: catraca
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catraca -d catraca"]
+      interval: 1s
+      timeout: 3s
+      retries: 60
+
+  gates:
+    build:
+      context: .
+      target: test
+    environment:
+      DATABASE_URL: postgres://catraca:catraca@db:5432/catraca
+      PARTNER_API_KEY: pk_test_catraca_parceiro
+      GATEWAY_MODE: simulated
+      # Testes aceleram o gateway (2–5 s viram 40–100 ms). O produto usa sempre 1.
+      GATEWAY_TIME_SCALE: "0.02"
+      GATEWAY_POLL_MS: "20"
+    depends_on:
+      db:
+        condition: service_healthy
