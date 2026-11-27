@@ -89,6 +89,15 @@
       "branch": "feature/F09-verificacao-integrada",
       "pr": "https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/9",
       "latestReport": "docs/features/F09-verificacao-integrada/reports/2026-11-27-avaliacao-1.md"
+    },
+    {
+      "id": "F10",
+      "name": "Layout fluido em azul e roxo",
+      "wave": 6,
+      "status": "in_review",
+      "branch": "feature/F10-layout-fluido",
+      "pr": "https://github.com/tiagobaptista-ui/mba-ia-catraca/pull/10",
+      "latestReport": null
     }
   ]
 }

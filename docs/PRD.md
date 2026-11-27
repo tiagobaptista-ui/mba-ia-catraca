@@ -45,6 +45,7 @@ além da lotação, nem sob compras simultâneas.
 | F07 | Cancelamento de evento | 4 | F02, F03, F04 |
 | F08 | Painel do evento | 4 | F02, F04 |
 | F09 | Verificação integrada (Fluxo do avaliador automatizado) | 5 | F05, F06, F07, F08 |
+| F10 | Layout fluido em azul e roxo | 6 | F01, F02, F08, F09 |
 
 ### F01 — Fundação, contas e harness
 
@@ -272,6 +273,30 @@ script de rajada do passo 15. É onde as features da wave 4 se encontram.
 - `F09-CA03` A partir de um clone limpo: subir, rodar o fluxo, rodar os gates, derrubar (nenhuma porta e nenhum
   container) e subir de novo — tudo sem erro (passos 1 e 17).
 
+### F10 — Layout fluido em azul e roxo
+
+Melhoria de apresentação pedida depois da entrega do MVP: um layout fluido, com azul e roxo como base, para todas
+as páginas. Não muda comportamento: textos visíveis, rotas e marcadores `data-*` continuam os mesmos. O código entrou
+pelo PR #10; spec, plano, contrato e avaliação foram registrados em seguida (ver `docs/features/F10-layout-fluido/`).
+
+**Provê**
+- `P-F10-1` Folha de estilo `src/core/style.js` (tokens azul/roxo, tipografia e espaçamentos fluidos com `clamp()`,
+  grades com `auto-fit`, modo escuro por `prefers-color-scheme`), servida em `GET /assets/catraca.css?v=<hash>`.
+- `P-F10-2` `page()` de F01 passa a referenciar a folha de estilo (sem CSS embutido), com `<nav>` no cabeçalho e
+  rodapé; contêiner `.cards` na vitrine (F02) e `.metric` por número do painel (F08).
+
+**Consome**: F01 (`page()`, rotas do app), F02 (vitrine e página de gestão), F08 (marcação do painel), F09 (fluxo
+automatizado como prova de que nada do comportamento mudou).
+
+**Critérios de aceite**
+- `F10-CA01` Toda página referencia `/assets/catraca.css` e não embute CSS; a folha usa a paleta azul/roxo e o
+  cabeçalho tem gradiente azul → roxo.
+- `F10-CA02` O layout é fluido: com 375 px de largura, vitrine, página do evento, "Meus ingressos" e página de gestão
+  não têm rolagem horizontal da página (tabelas rolam por dentro); em telas largas a vitrine mostra os eventos em
+  grade com mais de uma coluna.
+- `F10-CA03` Com `prefers-color-scheme: dark`, as páginas usam fundo escuro e texto claro, mantendo azul e roxo.
+- `F10-CA04` Nenhum texto visível nem marcador `data-*` mudou: os gates e o Fluxo do avaliador continuam passando.
+
 ## 5. Grafo de dependências
 
 ```mermaid
@@ -295,6 +320,10 @@ graph LR
   F06 --> F09
   F07 --> F09
   F08 --> F09
+  F01 --> F10[F10 Layout fluido]
+  F02 --> F10
+  F08 --> F10
+  F09 --> F10
 ```
 
 Seta `A --> B` = B consome o que A provê. Cada aresta tem pelo menos um critério cross-feature (seção 7).
@@ -320,6 +349,10 @@ Seta `A --> B` = B consome o que A provê. Cada aresta tem pelo menos um critér
 | F09 ← F06 | check-in integrado | X20 |
 | F09 ← F07 | cancelamento integrado | X21 |
 | F09 ← F08 | painel integrado | X22 |
+| F10 ← F01 | `page()` (layout), rotas do app | X23 |
+| F10 ← F02 | vitrine (cards) e página de gestão (seções) | X24 |
+| F10 ← F08 | marcação do painel (`data-metric`) | X25 |
+| F10 ← F09 | Fluxo do avaliador automatizado | X26 |
 
 ## 6. Waves
 
@@ -330,6 +363,7 @@ Seta `A --> B` = B consome o que A provê. Cada aresta tem pelo menos um critér
 | 3 | F04 | sequencial (precisa de F02 e F03) |
 | 4 | F05, F06, F07, F08 | **paralela**: quatro branches, quatro agentes ao mesmo tempo, quatro PRs |
 | 5 | F09 | sequencial, sobre a `main` integrada |
+| 6 | F10 | sequencial, melhoria de apresentação depois da entrega (PR #10) |
 
 Regras para paralelizar sem pisar no outro: cada feature tem módulo próprio (`src/modules/<nome>/`), migração com
 número reservado (`002` F02, `003` F03, `004` F04), testes em `test/<ID>/` e se pluga por pontos de extensão
@@ -362,6 +396,10 @@ resposta). Conflitos remanescentes (README, `state.json`) são resolvidos no mer
 | X20 | F09 ← F06 | Na `main` integrada, os passos de check-in (10, 11 com C3 de outro organizador, 14 com `Evento cancelado`) passam. | R10, R13 |
 | X21 | F09 ← F07 | Na `main` integrada, os passos de cancelamento (12–14), inclusive a resposta tardia do gateway, passam. | R11 |
 | X22 | F09 ← F08 | Na `main` integrada, o painel nos passos 9, 10, 14 e 15 bate com o estado dos ingressos (estorno fora da receita). | R12 |
+| X23 | F10 ← F01 | As páginas montadas por `page()` carregam `/assets/catraca.css` (200, `text/css`) e não embutem CSS; uma página negada (404 de evento de outro organizador) não expõe nenhum seletor ou marcador de dados. | R13 |
+| X24 | F10 ← F02 | A vitrine mostra os cards de evento numa grade fluida (`.cards`), sem mudar `<article class="card" data-event-id=…>`; a página de gestão mantém as seções `data-section`. | R02, R04 |
+| X25 | F10 ← F08 | O painel mostra um card por número (`.metric`) com os mesmos `data-metric` e valores de antes. | R12 |
+| X26 | F10 ← F09 | Com o layout novo, `node scripts/fluxo-avaliador.mjs` passa inteiro (passos 2–16). | R01–R13 |
 
 ## 8. Rastreabilidade das regras
 
@@ -370,7 +408,7 @@ resposta). Conflitos remanescentes (README, `state.json`) são resolvidos no mer
 | R01 | F02-CA01, F02-CA02 |
 | R02 | F02-CA01, F02-CA03, F05-CA01, X04, X09, X14, X19 |
 | R03 | F02-CA05, F04-CA05, F08-CA03, X05, X06, X18 |
-| R04 | F02-CA04, X12 |
+| R04 | F02-CA04, X12, X24 |
 | R05 | F04-CA02, F05-CA01, F07-CA03, F08-CA04, X05, X10, X15, X18 |
 | R06 | F03-CA03, F04-CA01, F04-CA02, F04-CA07, F05-CA02, X02, X03, X11 |
 | R07 | F04-CA03, F04-CA04, F05-CA03, X10, X19 |
@@ -378,14 +416,15 @@ resposta). Conflitos remanescentes (README, `state.json`) são resolvidos no mer
 | R09 | F04-CA01, F04-CA06, X03 |
 | R10 | F06-CA01 … F06-CA06, X12, X13, X20 |
 | R11 | F02-CA07, F07-CA01 … F07-CA05, X14, X15, X16, X21 |
-| R12 | F08-CA01 … F08-CA05, X17, X18, X22 |
-| R13 | F01-CA07, F02-CA06, F06-CA07, F07-CA06, F08-CA06, X01, X03, X12, X17 |
+| R12 | F08-CA01 … F08-CA05, X17, X18, X22, X25 |
+| R13 | F01-CA07, F02-CA06, F06-CA07, F07-CA06, F08-CA06, X01, X03, X12, X17, X23 |
 
 ## 9. Fora de escopo
 
 - Deploy e qualquer ambiente além do local (Docker Compose na máquina).
 - Gateway de pagamento real, e-mail e notificações (o gateway é sempre o simulado; outro modo falha na subida).
-- App mobile e qualidade visual (HTML server-side simples, sem CSS elaborado).
+- App mobile. Qualidade visual não é critério do brief: o layout fluido de F10 é melhoria de apresentação, sem
+  mudar comportamento.
 - Cadastro de organizador pelo produto (só seed), recuperação de senha, edição de perfil.
 - Mais de um ingresso por compra, mapa de assentos, cancelamento ou transferência de ingresso pelo participante.
 - Atualização em tempo real (recarregar a página basta).
