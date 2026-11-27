@@ -73,13 +73,32 @@ export async function countRows(table, where = 'true', params = []) {
   return rows[0].n;
 }
 
-// Antecipa as respostas do gateway dos ingressos indicados e as entrega (testes com workers: false). Outras
-// cobranças já vencidas também são entregues; falha se alguma das indicadas ficar sem resposta.
+// Adiamento temporário das cobranças que o teste não pediu. Intervalo só em horas (sem meses nem dias): somar e
+// subtrair é exato em timestamptz, então o respond_at original volta igual, até o microssegundo.
+const POSTPONE = "interval '876000 hours'"; // ~100 anos
+
+// Antecipa as respostas do gateway dos ingressos indicados e entrega SÓ essas (testes com workers: false), pelo
+// mesmo caminho do worker (processDueCharges). As demais cobranças não respondidas ficam adiadas durante a entrega
+// e depois voltam ao instante sorteado: sob carga, uma cobrança lenta (0003/0004, ~0,6–0,8 s com
+// GATEWAY_TIME_SCALE=0.02) que o teste quer manter pendente pode já ter vencido, e não deve ser entregue junto.
+// Falha se alguma das indicadas ficar sem resposta.
 export async function deliverResponses(ticketIds) {
-  await query("UPDATE gateway_charges SET respond_at = now() - interval '1 second' WHERE ticket_id = ANY($1::text[])", [
-    ticketIds,
-  ]);
-  await processDueCharges({ log: () => {} });
+  const { rows: postponed } = await query(
+    `UPDATE gateway_charges SET respond_at = respond_at + ${POSTPONE}
+      WHERE responded_at IS NULL AND NOT (ticket_id = ANY($1::text[]))
+      RETURNING id`,
+    [ticketIds],
+  );
+  try {
+    await query("UPDATE gateway_charges SET respond_at = now() - interval '1 second' WHERE ticket_id = ANY($1::text[])", [
+      ticketIds,
+    ]);
+    await processDueCharges({ log: () => {} });
+  } finally {
+    await query(`UPDATE gateway_charges SET respond_at = respond_at - ${POSTPONE} WHERE id = ANY($1::text[])`, [
+      postponed.map((r) => r.id),
+    ]);
+  }
   const left = await countRows('gateway_charges', 'ticket_id = ANY($1::text[]) AND responded_at IS NULL', [ticketIds]);
   if (left > 0) throw new Error(`${left} cobrança(s) sem resposta depois da entrega`);
 }

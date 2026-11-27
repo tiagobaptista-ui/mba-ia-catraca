@@ -12,11 +12,13 @@ Leia este arquivo inteiro antes de agir. O PRD manda no escopo; o contrato da fe
 | Gates (lint + testes automatizados) | `./scripts/gates.sh` | roda em containers isolados; `./scripts/gates.sh 'test/F04/*.test.js'` filtra testes |
 | Logs do app | `docker compose -p catraca logs -f app` | |
 | SQL no banco do app | `docker compose -p catraca exec db psql -U catraca catraca` | |
-| Rajada do passo 15 | `./scripts/rajada.sh <eventId>` | (F09) |
-| Fluxo do avaliador automatizado | `node scripts/fluxo-avaliador.mjs` | (F09) com o produto no ar |
+| Rajada do passo 15 | `./scripts/rajada.sh [repetições]` | (F09) eventos novos, padrão 5; confere `5 202` e `25 409` |
+| Fluxo do avaliador automatizado | `node scripts/fluxo-avaliador.mjs` | (F09) com o produto no ar; passos 2–16, tempos reais (~2 min) |
 
 Vários ambientes ao mesmo tempo (worktrees): `COMPOSE_PROJECT_NAME=catraca-f05 CATRACA_PORT=3105 ./scripts/up.sh`
-(e o mesmo prefixo no `down.sh`). Os gates já usam um projeto Compose próprio por pasta.
+(e o mesmo prefixo no `down.sh`). Fluxo e rajada recebem os endereços e a chave por variável (`WEB`, `API`, `KEY`):
+`WEB=http://localhost:3105 API=http://localhost:3105 node scripts/fluxo-avaliador.mjs`. Os gates já usam um projeto
+Compose próprio por pasta (nome da pasta + hash do caminho).
 
 Credenciais da seed (senha `catraca123` para todas): `organizador.a@catraca.dev`, `organizador.b@catraca.dev`,
 `participante@catraca.dev`. Chave de parceiro: `pk_test_catraca_parceiro`.
