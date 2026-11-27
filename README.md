@@ -31,7 +31,8 @@ brief).
 | Produto (`$WEB`) | http://localhost:3000 |
 | API de parceiros (`$API`) | http://localhost:3000 (rotas em `/api/partner/...`) |
 
-Porta alternativa: `CATRACA_PORT=3100 ./scripts/up.sh` (e o mesmo prefixo no `down.sh`).
+Porta alternativa: `CATRACA_PORT=3100 ./scripts/up.sh` (e o mesmo prefixo no `down.sh`). O fluxo e a rajada recebem os
+endereços e a chave por variável (`WEB`, `API`, `KEY`), ex.: `WEB=http://localhost:3100 API=http://localhost:3100 ./scripts/rajada.sh 5`.
 
 ## Credenciais (seed)
 
