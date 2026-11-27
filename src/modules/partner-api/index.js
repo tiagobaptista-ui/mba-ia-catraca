@@ -1,7 +1,7 @@
 import express from 'express';
 import { toIsoOffset } from '../../core/time.js';
 import { listOnSaleEvents } from '../events/service.js';
-import { getAvailabilityMap, purchaseTicket } from '../sales/service.js';
+import { getAvailabilityMap, getTicket, purchaseTicket } from '../sales/service.js';
 import { hasValidApiKey, requireApiKey, sendUnauthorized } from './auth.js';
 import { parsePurchaseBody } from './validation.js';
 
@@ -32,6 +32,17 @@ export function partnerEvent(event, availableSeats) {
   };
 }
 
+// Ingresso no formato do contrato.
+export function partnerTicket(ticket) {
+  return {
+    ticketId: ticket.id,
+    code: ticket.code,
+    eventId: ticket.eventId,
+    status: ticket.status,
+    checkedIn: ticket.checkedIn,
+  };
+}
+
 function partnerRoutes() {
   const router = express.Router();
   // A chave vem antes de tudo, inclusive do parse do corpo (o parser JSON fica nas rotas, depois deste middleware).
@@ -59,6 +70,13 @@ function partnerRoutes() {
     const failure = PURCHASE_ERRORS[result.error];
     if (!failure) throw new Error(`purchaseTicket: erro inesperado ${result.error}`);
     return sendError(res, failure.status, failure.error);
+  });
+
+  // Consulta de ingresso de qualquer canal (vitrine ou API, X11). checkedIn é atributo à parte, não status.
+  router.get('/tickets/:ticketId', async (req, res) => {
+    const ticket = await getTicket(req.params.ticketId);
+    if (!ticket) return sendError(res, 404, 'ticket_not_found');
+    return res.json(partnerTicket(ticket));
   });
 
   return router;
