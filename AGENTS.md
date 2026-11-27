@@ -70,7 +70,8 @@ Credenciais da seed (senha `catraca123` para todas): `organizador.a@catraca.dev`
 | Testes | `test/<ID>/`, helpers em `test/helpers/` |
 
 Módulos por feature: F01 `accounts` + `src/core`, F02 `events`, F03 `gateway`, F04 `sales`, F05 `partner-api`,
-F06 `checkin`, F07 `cancellation`, F08 `dashboard`, F09 `scripts/fluxo-avaliador.mjs`.
+F06 `checkin`, F07 `cancellation`, F08 `dashboard`, F09 `scripts/fluxo-avaliador.mjs`, F10 `src/core/style.js`
+(layout; servido em `/assets/catraca.css`).
 
 ## Como avaliar uma feature (papel de avaliador)
 
